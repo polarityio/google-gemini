@@ -1,0 +1,14 @@
+{
+  "name": "ChatGPT",
+  "version": "3.0.0-5",
+  "main": "./integration.js",
+  "private": true,
+  "dependencies": {
+    "postman-request": "^2.88.1-postman.32",
+    "async": "^3.2.4",
+    "@google-cloud/aiplatform": "^2.14.0",
+    "@google-ai/generativelanguage": "^0.2.0",
+    "googleapis": "^97.0.0",
+    "google-auth-library": "^8.8.0"
+  }
+}

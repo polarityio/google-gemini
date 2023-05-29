@@ -1,0 +1,102 @@
+<div class="d-flex align-items-center justify-content-end copy-btn-container">
+  <button
+          class="btn copy-btn p-action"
+    {{action "copyData"}}
+          title="Copy Chat to Clipboard"
+  >
+    {{fa-icon icon="clipboard" fixedWidth=true}}
+  </button>
+  <div class="copy-success-message {{if showCopyMessage 'visible' 'hidden'}}">
+    {{fa-icon icon="check" fixedWidth=true class="copy-success-icon"}}
+    Copied chat.
+  </div>
+</div>
+<div class="info-container d-flex align-items-center justify-content-between">
+  {{#if details.showDisclaimer}}
+    <div>
+      <span>Accept disclaimer to run your search</span>
+    </div>
+  {{else if details.disclaimerDeclined}}
+    <div>
+      <span>Search declined.</span>
+    </div>
+  {{else}}
+    <div>
+      <span class="p-action" {{action "clearChat"}}>clear chat</span>
+    </div>
+    {{!--
+    <div>
+      Chat Length: {{details.response.usage.total_tokens}} / 4096
+    </div>
+    --}}
+  {{/if}}
+</div>
+<div class="scrollable-container {{if (gt details.response.usage.total_tokens tokenWarningAmount) "token-warning-visible"}}" id="{{concat "googleai-" uniqueIdPrefix}}">
+  {{#each details.responses as |response index|}}
+    <div class="chat-bubble d-flex align-items-start mt-2 {{response.author}}" id="{{concat "googleai-choice-" index "-" uniqueIdPrefix}}">
+      {{#if (eq response.author "bot")}}
+        {{fa-icon icon="robot" fixedWidth=true class="assistant-icon"}}
+      {{else}}
+        <AvatarImage @name="{{details.username}}" />
+      {{/if}}
+      <div class="content">{{response.content}}</div>
+    </div>
+  {{/each}}
+  {{#if details.showDisclaimer}}
+      <div class="d-flex align-items-start mt-2 chat-bubble disclaimer">
+        {{details.disclaimer}}
+      </div>
+  {{/if}}
+  {{#if isRunning}}
+    <div class="chat-bubble d-flex align-items-center mt-2 assistant" id="{{concat "googleai-running-indicator-" uniqueIdPrefix}}">
+      {{fa-icon icon="robot" fixedWidth=true class="assistant-icon"}}
+      <div class="dot-pulse ml-4"></div>
+    </div>
+  {{/if}}
+  {{#if errorMessage}}
+    <div class="alert alert-danger mt-2 error-container" id="{{concat "googleai-error-message-" uniqueIdPrefix}}">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="error-title">{{fa-icon icon="exclamation-triangle" fixedWidth=true}} An Error Occurred</div>
+        {{fa-icon icon="times" fixedWidth=true class="error-close" click=(action "closeError")}}
+      </div>
+      <div class="error-item">{{errorMessage}}</div>
+    </div>
+  {{/if}}
+  {{#if details.logSearches}}
+    <div class="p-footnote logging-disclaimer">All searches are logged</div>
+  {{/if}}
+</div>
+{{#if (gt details.response.usage.total_tokens tokenWarningAmount)}}
+  <div class="token-warning p-footnote">
+    You are approaching the maximum number of tokens.  Clear the chat to reset the token count.
+  </div>
+{{/if}}
+{{#if details.showDisclaimer}}
+  <div class="message-box w-100 d-flex justify-content-end">
+    <button {{action "declineDisclaimer"}} class="btn btn-outline-secondary" type="button">
+      Decline
+    </button>
+    <button {{action "acceptDisclaimer"}} class="btn btn-outline-secondary ml-1" type="button">
+      Accept
+    </button>
+  </div>
+{{else}}
+  <div class="input-group message-box">
+    {{input
+            type="text"
+            class="form-control"
+            enter=(action "submitQuestion")
+            value=question
+            id=(concat "googleai-input-" uniqueIdPrefix)
+    }}
+    <div class="input-group-append">
+      <button {{action "submitQuestion"}} class="btn btn-outline-secondary" disabled={{isRunning}} type="button">
+        {{#if isRunning}}
+          {{fa-icon icon="spinner-third" fixedWidth=true spin=true}}
+        {{else}}
+          {{fa-icon icon="paper-plane" fixedWidth=true}}
+        {{/if}}
+      </button>
+    </div>
+  </div>
+{{/if}}
