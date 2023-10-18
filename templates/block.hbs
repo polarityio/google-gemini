@@ -24,14 +24,12 @@
     <div>
       <span class="p-action" {{action "clearChat"}}>clear chat</span>
     </div>
-    {{!--
     <div>
-      Chat Length: {{details.response.usage.total_tokens}} / 4096
+      Chat Length: {{tokenCount}} / 8196
     </div>
-    --}}
   {{/if}}
 </div>
-<div class="scrollable-container {{if (gt details.response.usage.total_tokens tokenWarningAmount) "token-warning-visible"}}" id="{{concat "googleai-" uniqueIdPrefix}}">
+<div class="scrollable-container {{if (gt tokenCount tokenWarningAmount) "token-warning-visible"}}" id="{{concat "googleai-" uniqueIdPrefix}}">
   {{#each details.responses as |response index|}}
     <div class="chat-bubble d-flex align-items-start mt-2 {{response.author}}" id="{{concat "googleai-choice-" index "-" uniqueIdPrefix}}">
       {{#if (eq response.author "bot")}}
@@ -66,7 +64,7 @@
     <div class="p-footnote logging-disclaimer">All searches are logged</div>
   {{/if}}
 </div>
-{{#if (gt details.response.usage.total_tokens tokenWarningAmount)}}
+{{#if (gt tokenCount tokenWarningAmount)}}
   <div class="token-warning p-footnote">
     You are approaching the maximum number of tokens.  Clear the chat to reset the token count.
   </div>
