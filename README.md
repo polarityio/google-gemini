@@ -14,7 +14,7 @@ The API Key must have access to Google's Generative Language API.  To do this, y
 
 To enable the Generative Language API on a project click this link: https://console.cloud.google.com/flows/enableapi?apiid=generativelanguage.googleapis.com
 
-<img src="images/enable-api.png" width="50%">
+<img src="images/enable-api.png" width="60%">
 
 Once the API is enabled on your Project, you can generate an API key by navigating to the "APIs Services" -> "Credentials" page found here: https://console.cloud.google.com/apis/credentials
 
@@ -22,17 +22,17 @@ Click on "Create Credentials" and then select "API key".
 
 Once the key is generated, it will have a generic name such as "API Key 1".  Click on the key name to edit it.
 
-<img src="images/key-name.png" width="50%">
+<img src="images/key-name.png" width="60%">
 
 Change the "Name" to something descriptive such as "Polarity Google Bard Integration".
 
-<img src="images/rename-key.png" width="50%">
+<img src="images/rename-key.png" width="60%">
 
 If you'd like to restrict access to the key by IP address, you can provide your Polarity Server's IP address in the "Set an application restriction" section.
 
 Under "API restrictions" select "Restrict key" and then select "Google Generative Language API" from the dropdown.
 
-<img src="images/api-restrictions.png" width="50%">
+<img src="images/api-restrictions.png" width="60%">
 
 Click "Save" to apply your changes.
 
