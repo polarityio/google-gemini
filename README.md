@@ -12,9 +12,9 @@ For more information on Google's Generative Language REST API please see: https:
 
 ## Google Bard AI Integration Options
 
-### API Key
+### Google Cloud API Key
 
-The API Key must have access to Google's Generative Language API.  To do this, you must enable the Generative Language API on the project associated with the provided API key.
+The Google Cloud API Key must have access to Google's Generative Language API.  To do this, you must enable the Generative Language API on the project associated with the provided API key.
 
 To enable the Generative Language API on a project click this link: https://console.cloud.google.com/flows/enableapi?apiid=generativelanguage.googleapis.com
 
