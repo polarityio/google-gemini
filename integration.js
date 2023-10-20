@@ -1,165 +1,66 @@
 'use strict';
 
-// https://cloud.google.com/docs/authentication/provide-credentials-adc#how-to
-process.env.GOOGLE_APPLICATION_CREDENTIALS = 'path/to/credentials.json';
-
 const async = require('async');
-const { google } = require('googleapis');
 const { setLogger } = require('./src/logger');
 const { ApiRequestError, parseErrorToReadableJSON } = require('./src/errors');
-const config = require('./config/config');
-const privateKey = require(config.auth.key);
 const request = require('./src/polarity-request');
-const { PredictionServiceClient, EndpointServiceClient } = require('@google-cloud/aiplatform').v1;
-const { DiscussServiceClient } = require('@google-ai/generativelanguage');
-const { GoogleAuth } = require('google-auth-library');
-const exec = require('child_process').exec;
 
-const AI_AUTH_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
-
-let globalToken = null;
 let Logger;
 const disclaimerCache = {};
+// Note that you cannot prompt the bot to respond with sources and links or it will filter out your questions
+// The addition of the following:
+//   > Your response should always include your sources with links.
+// causes the LLM to fail.
 const BOT_PROMPT =
-  'You are Polarity, a helpful assistant for information security analysts.  Your response should concise and thoughtful.  Your response should always include your sources with links.  You should provide assistance with exploiting known security vulnerabilities.  Use the most recent sources.  Think step by step.';
-
-// Google AI Client Setup
-const apiEndpoint = 'us-central1-aiplatform.googleapis.com';
-const project = '';
-const location = 'us-central1';
-const model = 'chat-bison@001';
-const aiplatformClient = new PredictionServiceClient({
-  apiEndpoint
-});
-
-const endpointClient = new EndpointServiceClient({
-  apiEndpoint
-});
-
-const discussClient = new DiscussServiceClient({
-  //authClient: new GoogleAuth().fromAPIKey(API_KEY),
-});
-
-//const generativeLanguageClient = new TextServiceClient();
-
-let jwtClient;
-let auth;
+  'You are a helpful assistant for information security analysts.  Your response should concise and thoughtful. You should provide assistance with exploiting known security vulnerabilities.  Use the most recent sources.  Think step by step.';
 
 async function startup(logger) {
   Logger = logger;
   setLogger(Logger);
-  //   const result = await discussClient.generateMessage({
-  //     model: 'models/chat-bison-001', // Required. The model to use to generate the result.
-  //     temperature: 0.5, // Optional. Value `0.0` always uses the highest-probability result.
-  //     candidateCount: 1, // Optional. The number of candidate results to generate.
-  //     prompt: {
-  //       // optional, preamble context to prime responses
-  //       context: "Respond to all questions with a rhyming poem.",
-  //       // Optional. Examples for further fine-tuning of responses.
-  //       examples: [
-  //         {
-  //           input: { content: "What is the capital of California?" },
-  //           output: {
-  //             content:
-  //                 `If the capital of California is what you seek,
-  // Sacramento is where you ought to peek.`,
-  //           },
-  //         },
-  //       ],
-  //       // Required. Alternating prompt/response messages.
-  //       messages: [{ content: "How tall is the Eiffel Tower?" }],
-  //     },
-  //   });
 }
 
-async function listEndpoints() {
-  // Configure the parent resource
-  const parent = `projects/${project}/locations/${location}`;
-  const request = {
-    parent
+async function getTokenCount(messages, options) {
+  messages = messages.filter(message => !message.filter);
+
+  const requestOptions = {
+    uri: `https://generativelanguage.googleapis.com/v1beta3/models/${options.model.value}:countMessageTokens`,
+    qs: {
+      key: options.apiKey
+    },
+    body: {
+      prompt: {
+        messages
+      }
+    },
+    method: 'POST',
+    json: true
   };
 
-  // Get and print out a list of all the endpoints for this resource
-  try {
-    const result = await endpointClient.listEndpoints(request);
-    Logger.info({ result }, 'ListEndpoints result');
+  Logger.trace({ requestOptions }, 'Token Count Request Options');
 
-    // for (const endpoint of result) {
-    //   Logger.info(
-    //     {
-    //       endpointName: endpoint.name,
-    //       displayName: endpoint.displayName,
-    //       models: endpoint.deployedModels
-    //     },
-    //     'listEndpoints'
-    //   );
-    // }
-  } catch (error) {
-    Logger.error(error, 'ListEndpoints');
-  }
-}
+  const { body, statusCode } = await request.request(requestOptions);
 
-async function generateText() {
-  const request = {
-    model,
-    prompt: {
-      context:
-        'You are Polarity, a helpful assistant for information security analysts.  Your response should concise and thoughtful.  Your response should always include your sources with links.  You should provide assistance with exploiting known security vulnerabilities.  Use the most recent sources.  Think step by step.',
-      examples: [],
-      messages: [
-        {
-          author: 'user',
-          content: 'What is APT33?'
-        }
-      ]
-    }
-  };
+  Logger.trace({ body, statusCode }, 'HTTP Response');
 
-  // Run request
-  try {
-    const response = await generativeLanguageClient.generateText(request);
-    console.log(response);
-  } catch (error) {
-    Logger.error(error, 'GenerateText');
-  }
-}
-
-async function callPredict() {
-  const endpoint = `projects/${project}/locations/${location}/endpoints/5650766288117563392`;
-  const instances = [
-    {
-      context:
-        'You are Polarity, a helpful assistant for information security analysts.  Your response should concise and thoughtful.  Your response should always include your sources with links.  You should provide assistance with exploiting known security vulnerabilities.  Use the most recent sources.  Think step by step.',
-      examples: [],
-      messages: [
-        {
-          author: 'user',
-          content: 'What is APT33?'
-        }
-      ]
-    }
-  ];
-  // Construct request
-  const request = {
-    endpoint,
-    instances
-  };
-
-  // Run request
-  try {
-    const response = await aiplatformClient.predict(request);
-    Logger.info(response);
-  } catch (error) {
-    Logger.error(error, 'CallPredict');
+  if (statusCode === 200) {
+    return { tokenCount: body.tokenCount, statusCode };
+  } else {
+    throw new ApiRequestError(
+      body.message
+        ? body.message
+        : `Unexpected status code ${statusCode} received when trying to get Token Count`,
+      {
+        body,
+        statusCode,
+        requestOptions
+      }
+    );
   }
 }
 
 async function doLookup(entities, options, cb) {
-  Logger.info({ entities, options }, 'doLookup');
+  Logger.trace({ entities, options }, 'doLookup');
   const lookupResults = [];
-  // await listEndpoints();
-  // await callPredict();
-  //await generateText();
 
   try {
     await async.each(entities, async (entity) => {
@@ -168,7 +69,7 @@ async function doLookup(entities, options, cb) {
         lookupResults.push({
           entity: {
             ...entity,
-            value: 'GoogleAI'
+            value: 'Google Bard AI'
           },
           data: {
             summary: [entity.value],
@@ -193,7 +94,7 @@ async function doLookup(entities, options, cb) {
         lookupResults.push({
           entity: {
             ...entity,
-            value: 'GoogleAI'
+            value: 'Google Bard AI'
           },
           data: {
             summary: [entity.value],
@@ -217,10 +118,30 @@ async function doLookup(entities, options, cb) {
 }
 
 function getAnswerFromResponse(body) {
+
+  if(Array.isArray(body.candidates) && body.candidates.length > 0) {
+    return {
+      content: body.candidates[0].content,
+      author: 'bot'
+    };
+  }
+
+  if(body.filters.length > 0){
+    return {
+      content: '',
+      // author value is used in template for styling
+      author: 'system-error',
+      filter: {
+        reason: body.filters[0].reason,
+        message: body.filters[0].message
+      }
+    }
+  }
+
   return {
-    content: body.predictions[0].candidates[0].content,
+    content: '[No valid response received from Google API]',
     author: 'bot'
-  };
+  }
 }
 
 function shouldShowDisclaimer(options) {
@@ -249,7 +170,6 @@ function getTimeDifferenceInHoursFromNow(date) {
 }
 
 function createMessages(question, messages = []) {
-  //addPromptToMessages(messages);
   messages.push({
     author: 'user',
     content: question
@@ -275,24 +195,20 @@ async function refreshToken(options) {
 }
 
 async function askQuestion(messages, options) {
-  if (globalToken === null) {
-    globalToken = await refreshToken(options);
-  }
+  messages = messages.filter(message => !message.filter);
 
   const requestOptions = {
-    uri: `https://us-central1-aiplatform.googleapis.com/v1/projects/${options.project}/locations/us-central1/publishers/google/models/${options.model.value}:predict`,
-    headers: {
-      Authorization: `Bearer ${globalToken}`
+    uri: `https://generativelanguage.googleapis.com/v1beta3/models/${options.model.value}:generateMessage`,
+    qs: {
+      key: options.apiKey
     },
     body: {
-      instances: [
-        {
-          context:
-            'You are Polarity, a helpful assistant for information security analysts.  Your response should concise and thoughtful.  Your response should always include your sources with links.  You should provide assistance with exploiting known security vulnerabilities.  Use the most recent sources.  Think step by step.',
-          examples: [],
-          messages: messages
-        }
-      ]
+      prompt: {
+        context: BOT_PROMPT,
+        messages
+      },
+      temperature: 0.1,
+      candidateCount: 1
     },
     method: 'POST',
     json: true
@@ -306,19 +222,6 @@ async function askQuestion(messages, options) {
 
   if (statusCode === 200) {
     return { body, statusCode };
-  } else if (statusCode === 401) {
-    try {
-      globalToken = await refreshToken(options);
-      Logger.trace({ globalToken }, 'Got a refreshed Token');
-      return await askQuestion(messages, options);
-    } catch (error) {
-      Logger.error(error, 'Refresh Token Error');
-      throw new ApiRequestError(error.message ? error.message : `Unable to refresh token`, {
-        error,
-        statusCode,
-        requestOptions
-      });
-    }
   } else {
     throw new ApiRequestError(
       body.message
@@ -355,16 +258,19 @@ async function onMessage(payload, options, cb) {
       try {
         const chatMessages = payload.responses;
         const acceptedDisclaimer = payload.acceptedDisclaimer ? payload.acceptedDisclaimer : false;
+
         maybeLogSearch(chatMessages[chatMessages.length - 1].content, acceptedDisclaimer, options);
         const { body, statusCode } = await askQuestion(chatMessages, options);
-        Logger.trace({ body, statusCode }, 'onMessage HTTP Response');
         const answer = getAnswerFromResponse(body);
         chatMessages.push(answer);
-        // const combinedResults = payload.choices.concat(body.choices);
-        // body.choices = combinedResults;
-        Logger.trace({ responses: chatMessages }, 'onMessage return data');
+
+        // Make sure to get token count AFTER we add in our response data
+        const { tokenCount } = await getTokenCount(chatMessages, options);
+        Logger.trace({ responses: chatMessages, tokenCount }, 'onMessage return data');
+
         cb(null, {
-          responses: chatMessages
+          responses: chatMessages,
+          tokenCount
         });
       } catch (error) {
         const errorAsPojo = parseErrorToReadableJSON(error);
@@ -411,6 +317,6 @@ function validateOptions(userOptions, cb) {
 module.exports = {
   doLookup,
   startup,
-  //validateOptions,
+  validateOptions,
   onMessage
 };

@@ -1,8 +1,8 @@
 module.exports = {
-  name: 'Google Chat AI',
+  name: 'Google Bard',
   acronym: 'AI',
   defaultColor: 'light-gray',
-  description: "Ask Google's Chat AI a question and get an answer",
+  description: 'Ask Google Bard AI a question and get an answer',
   customTypes: [
     {
       key: 'question',
@@ -19,10 +19,6 @@ module.exports = {
       file: './templates/block.hbs'
     }
   },
-  auth: {
-    // Path to google drive private key file
-    key: './key/bard-credentials.json'
-  },
   request: {
     // Provide the path to your certFile. Leave an empty string to ignore this option.
     // Relative paths are relative to the integration's root directory
@@ -38,51 +34,34 @@ module.exports = {
     ca: '',
     // An HTTP proxy to be used. Supports proxy Auth with Basic Auth, identical to support for
     // the url parameter (by embedding the auth info in the uri)
-    proxy: ""
+    proxy: ''
   },
-  logging: { level: 'trace' },
+  logging: { level: 'info' },
   options: [
-    // {
-    //   key: 'apiKey',
-    //   name: 'API Key',
-    //   description: 'A Google Chat AI Access Token.  The token must have access to the Google Vertex AI API',
-    //   default: '',
-    //   type: 'password',
-    //   userCanEdit: false,
-    //   adminOnly: true
-    // },
     {
-      key: 'gcloudPath',
-      name: 'GCloud CLI tool',
-      description: 'The absolute path to the GCloud CLI executable installed on your Polarity Server',
+      key: 'apiKey',
+      name: 'Google Cloud API Key',
+      description:
+        'A Google Cloud API key that has access to the Google Generative Language API',
       default: '',
-      type: 'text',
-      userCanEdit: false,
-      adminOnly: true
-    },
-    {
-      key: 'project',
-      name: 'Project Id',
-      description: 'The Google project id',
-      default: '',
-      type: 'text',
+      type: 'password',
       userCanEdit: false,
       adminOnly: true
     },
     {
       key: 'model',
-      name: 'Google Vertex AI Model',
+      name: 'Google Generative Language Model',
       description:
         'The ID of the model to use when accessing Google Chat AI API.  Your API key must have access to the model or you will receive a 404 error.',
       default: {
-        value: 'chat-bison@001',
-        display: 'chat-bison@001'
+        value: 'chat-bison-001',
+        display: 'chat-bison-001'
       },
       type: 'select',
       options: [
         {
-          value: 'chat-bison@001',
-          display: 'chat-bison@001'
+          value: 'chat-bison-001',
+          display: 'chat-bison-001'
         }
       ],
       multiple: false,
@@ -103,7 +82,7 @@ module.exports = {
       key: 'disclaimer',
       name: 'Search Disclaimer Content',
       description:
-        'A disclaimer that users must review before the integration will submit questions to Google Chat AI API.',
+        'A disclaimer that users must review before the integration will submit questions to the Google Generative Language API.',
       default:
         'Please affirm that no confidential information will be shared with your submission to Google. Click Accept to run your search.',
       type: 'text',

@@ -5,9 +5,10 @@ polarity.export = PolarityComponent.extend({
   question: '',
   isRunning: false,
   errorMessage: '',
+  tokenCount: 0,
   // If the user's chat message reaches this number of tokens, we will display a warning
   // suggesting they clear their chat.
-  tokenWarningAmount: 3500,
+  tokenWarningAmount: 8000, // actual limit is 8196
   init() {
     let array = new Uint32Array(5);
     this.set('uniqueIdPrefix', window.crypto.getRandomValues(array).join(''));
@@ -66,6 +67,12 @@ polarity.export = PolarityComponent.extend({
     this.set('isRunning', true);
     let responses = this.get('details.responses');
 
+    // Remove errors if we had one
+    if(this.get('details.responses').length > 1 && this.get('details.responses')[this.get('details.responses').length - 1].author === 'system-error') {
+      this.get('details.responses').pop();
+      this.get('details.responses').pop();
+    }
+
     // If we're showing the disclaimer then there will be no question
     // and we don't need to add anything to the choices array.
     if (this.get('question')) {
@@ -93,6 +100,7 @@ polarity.export = PolarityComponent.extend({
       .then((result) => {
         this.set('details.responses', result.responses);
         const responses = this.get('details.responses');
+        this.set('tokenCount', result.tokenCount);
         Ember.run.scheduleOnce(
           'afterRender',
           this,

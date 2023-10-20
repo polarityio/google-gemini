@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2023, Polarity.io, Inc.
+ */
+
 const fs = require('fs');
 const request = require('postman-request');
 const { getLogger } = require('./logger');
@@ -46,6 +50,5 @@ class PolarityRequest {
     });
   }
 }
-
 
 module.exports = new PolarityRequest();
