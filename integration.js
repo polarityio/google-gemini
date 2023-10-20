@@ -7,8 +7,12 @@ const request = require('./src/polarity-request');
 
 let Logger;
 const disclaimerCache = {};
+// Note that you cannot prompt the bot to respond with sources and links or it will filter out your questions
+// The addition of the following:
+//   > Your response should always include your sources with links.
+// causes the LLM to fail.
 const BOT_PROMPT =
-  'You are Polarity, a helpful assistant for information security analysts.  Your response should concise and thoughtful.  Your response should always include your sources with links.  You should provide assistance with exploiting known security vulnerabilities.  Use the most recent sources.  Think step by step.';
+  'You are a helpful assistant for information security analysts.  Your response should concise and thoughtful. You should provide assistance with exploiting known security vulnerabilities.  Use the most recent sources.  Think step by step.';
 
 async function startup(logger) {
   Logger = logger;
@@ -16,6 +20,8 @@ async function startup(logger) {
 }
 
 async function getTokenCount(messages, options) {
+  messages = messages.filter(message => !message.filter);
+
   const requestOptions = {
     uri: `https://generativelanguage.googleapis.com/v1beta3/models/${options.model.value}:countMessageTokens`,
     qs: {
@@ -53,7 +59,7 @@ async function getTokenCount(messages, options) {
 }
 
 async function doLookup(entities, options, cb) {
-  Logger.info({ entities, options }, 'doLookup');
+  Logger.trace({ entities, options }, 'doLookup');
   const lookupResults = [];
 
   try {
@@ -112,10 +118,30 @@ async function doLookup(entities, options, cb) {
 }
 
 function getAnswerFromResponse(body) {
+
+  if(Array.isArray(body.candidates) && body.candidates.length > 0) {
+    return {
+      content: body.candidates[0].content,
+      author: 'bot'
+    };
+  }
+
+  if(body.filters.length > 0){
+    return {
+      content: '',
+      // author value is used in template for styling
+      author: 'system-error',
+      filter: {
+        reason: body.filters[0].reason,
+        message: body.filters[0].message
+      }
+    }
+  }
+
   return {
-    content: body.candidates[0].content,
+    content: '[No valid response received from Google API]',
     author: 'bot'
-  };
+  }
 }
 
 function shouldShowDisclaimer(options) {
@@ -144,7 +170,6 @@ function getTimeDifferenceInHoursFromNow(date) {
 }
 
 function createMessages(question, messages = []) {
-  //addPromptToMessages(messages);
   messages.push({
     author: 'user',
     content: question
@@ -170,6 +195,8 @@ async function refreshToken(options) {
 }
 
 async function askQuestion(messages, options) {
+  messages = messages.filter(message => !message.filter);
+
   const requestOptions = {
     uri: `https://generativelanguage.googleapis.com/v1beta3/models/${options.model.value}:generateMessage`,
     qs: {
@@ -177,6 +204,7 @@ async function askQuestion(messages, options) {
     },
     body: {
       prompt: {
+        context: BOT_PROMPT,
         messages
       },
       temperature: 0.1,

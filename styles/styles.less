@@ -8,11 +8,16 @@
   width: 100%
 }
 
+
 .chat-bubble {
   border-radius: 4px;
   padding: 8px;
   white-space: pre-wrap;
   word-break: break-word;
+
+  .content-filtered {
+    white-space: normal;
+  }
 
   .content {
     margin-left: 8px;
@@ -28,6 +33,19 @@
       min-width: 15px !important;
       width: 15px;
       height: 15px;
+    }
+  }
+
+  &.system-error {
+    border: 1px solid #dedede;
+    border-bottom: 2px solid #dedede;
+    background-color: #f8f8f8;
+
+    .warning-icon {
+      min-width: 15px !important;
+      width: 15px;
+      height: 15px;
+      color: #ffc107;
     }
   }
 

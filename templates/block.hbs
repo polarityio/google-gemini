@@ -25,6 +25,7 @@
       <span class="p-action" {{action "clearChat"}}>clear chat</span>
     </div>
     <div>
+      {{!-- TODO: make max token count depend on model --}}
       Chat Length: {{tokenCount}} / 8196
     </div>
   {{/if}}
@@ -32,12 +33,21 @@
 <div class="scrollable-container {{if (gt tokenCount tokenWarningAmount) "token-warning-visible"}}" id="{{concat "googleai-" uniqueIdPrefix}}">
   {{#each details.responses as |response index|}}
     <div class="chat-bubble d-flex align-items-start mt-2 {{response.author}}" id="{{concat "googleai-choice-" index "-" uniqueIdPrefix}}">
-      {{#if (eq response.author "bot")}}
+      {{#if response.filter}}
+        {{fa-icon icon="exclamation-triangle" class="warning-icon" fixedWidth=true}}
+      {{else if (eq response.author "bot")}}
         {{fa-icon icon="robot" fixedWidth=true class="assistant-icon"}}
       {{else}}
         <AvatarImage @name="{{details.username}}" />
       {{/if}}
-      <div class="content">{{response.content}}</div>
+      {{#if response.content}}
+        <div class="content">{{response.content}}</div>
+      {{else if response.filter}}
+        <div class="content-filtered">
+          <div class="content"> The content of this request was blocked by Google.  Ask another question.</div>
+          <div class="content mt-1 p-footnote">Reason: {{response.filter.reason}}{{#if response.filter.message}}: {{response.filter.message}}{{/if}}</div>
+        </div>
+      {{/if}}
     </div>
   {{/each}}
   {{#if details.showDisclaimer}}
