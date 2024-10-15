@@ -24,28 +24,35 @@
     <div>
       <span class="p-action" {{action "clearChat"}}>clear chat</span>
     </div>
-    <div>
-      {{!-- TODO: make max token count depend on model --}}
-      Chat Length: {{tokenCount}} / 8196
-    </div>
   {{/if}}
 </div>
 <div class="scrollable-container {{if (gt tokenCount tokenWarningAmount) "token-warning-visible"}}" id="{{concat "googleai-" uniqueIdPrefix}}">
   {{#each details.responses as |response index|}}
-    <div class="chat-bubble d-flex align-items-start mt-2 {{response.author}}" id="{{concat "googleai-choice-" index "-" uniqueIdPrefix}}">
+    <div class="chat-bubble d-flex align-items-start mt-2 {{response.role}}" id="{{concat "googleai-choice-" index "-" uniqueIdPrefix}}">
       {{#if response.filter}}
         {{fa-icon icon="exclamation-triangle" class="warning-icon" fixedWidth=true}}
-      {{else if (eq response.author "bot")}}
+      {{else if (eq response.role "model")}}
         {{fa-icon icon="robot" fixedWidth=true class="assistant-icon"}}
       {{else}}
         <AvatarImage @name="{{details.username}}" />
       {{/if}}
-      {{#if response.content}}
-        <div class="content">{{response.content}}</div>
+      {{#if response.parts}}
+        <div class="content">{{response.parts.[0].text}}</div>
       {{else if response.filter}}
         <div class="content-filtered">
           <div class="content"> The content of this request was blocked by Google.  Ask another question.</div>
-          <div class="content mt-1 p-footnote">Reason: {{response.filter.reason}}{{#if response.filter.message}}: {{response.filter.message}}{{/if}}</div>
+          <div class="content mt-1 p-footnote">Reason: {{response.filter.finishReason}}</div>
+          {{#if response.filter.safetyRatings}}
+            <div>
+              <h1 class="p-title">Safety Ratings</h1>
+              {{#each response.filter.safetyRatings as | rating |}}
+                <div>
+                  <span class="p-key">{{rating.category}}</span>
+                  <span class="p-value">{{rating.probability}}</span>
+                </div>
+              {{/each}}
+            </div>
+          {{/if}}
         </div>
       {{/if}}
     </div>
