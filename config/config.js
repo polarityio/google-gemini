@@ -1,12 +1,13 @@
 module.exports = {
-  name: 'Google Bard',
+  polarityIntegrationUuid: '721d48e0-6f51-11ee-b480-157aad187429',
+  name: 'Google Gemini',
   acronym: 'AI',
   defaultColor: 'light-gray',
-  description: 'Ask Google Bard AI a question and get an answer',
+  description: 'Ask Google Gemini a question and get an answer',
   customTypes: [
     {
       key: 'question',
-      regex: /^(?<!\n|\r\n)[ \t]*.{5,256}\?[ \t]*(?!\n|\r\n)$/
+      regex: '^(?<!\\n|\\r\\n)[ \\t]*.{5,256}\\?[ \\t]*(?!\\n|\\r\\n)$'
     }
   ],
   onDemandOnly: true,
@@ -20,29 +21,20 @@ module.exports = {
     }
   },
   request: {
-    // Provide the path to your certFile. Leave an empty string to ignore this option.
-    // Relative paths are relative to the integration's root directory
     cert: '',
-    // Provide the path to your private key. Leave an empty string to ignore this option.
-    // Relative paths are relative to the integration's root directory
     key: '',
-    // Provide the key passphrase if required.  Leave an empty string to ignore this option.
-    // Relative paths are relative to the integration's root directory
     passphrase: '',
-    // Provide the Certificate Authority. Leave an empty string to ignore this option.
-    // Relative paths are relative to the integration's root directory
     ca: '',
-    // An HTTP proxy to be used. Supports proxy Auth with Basic Auth, identical to support for
-    // the url parameter (by embedding the auth info in the uri)
     proxy: ''
   },
-  logging: { level: 'info' },
+  logging: {
+    level: 'info'
+  },
   options: [
     {
       key: 'apiKey',
       name: 'Google Cloud API Key',
-      description:
-        'A Google Cloud API key that has access to the Google Generative Language API',
+      description: 'A Google Cloud API key that has access to the Google Gemini API',
       default: '',
       type: 'password',
       userCanEdit: false,
@@ -50,18 +42,23 @@ module.exports = {
     },
     {
       key: 'model',
-      name: 'Google Generative Language Model',
+      name: 'Google Gemini Language Model',
       description:
         'The ID of the model to use when accessing Google Chat AI API.  Your API key must have access to the model or you will receive a 404 error.',
       default: {
-        value: 'chat-bison-001',
-        display: 'chat-bison-001'
+        value: 'gemini-1.5-pro-latest',
+        display: 'gemini-1.5-pro-latest (Complex reasoning tasks requiring more intelligence)'
       },
       type: 'select',
       options: [
         {
-          value: 'chat-bison-001',
-          display: 'chat-bison-001'
+          value: 'gemini-1.5-pro-latest',
+          display: 'gemini-1.5-pro-latest (Complex reasoning tasks requiring more intelligence)'
+        },
+        {
+          value: 'gemini-1.5-flash-latest',
+          display:
+            'gemini-1.5-flash-latest (Fast and versatile performance across a diverse variety of tasks)'
         }
       ],
       multiple: false,
@@ -82,7 +79,7 @@ module.exports = {
       key: 'disclaimer',
       name: 'Search Disclaimer Content',
       description:
-        'A disclaimer that users must review before the integration will submit questions to the Google Generative Language API.',
+        'A disclaimer that users must review before the integration will submit questions to the Google Gemini API.',
       default:
         'Please affirm that no confidential information will be shared with your submission to Google. Click Accept to run your search.',
       type: 'text',

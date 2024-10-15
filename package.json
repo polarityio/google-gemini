@@ -1,10 +1,10 @@
 {
   "name": "GoogleBard",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "main": "./integration.js",
   "private": true,
   "dependencies": {
-    "postman-request": "^2.88.1-postman.32",
-    "async": "^3.2.4"
+    "postman-request": "^2.88.1-postman.40",
+    "async": "^3.2.6"
   }
 }
