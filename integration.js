@@ -12,50 +12,11 @@ const disclaimerCache = {};
 //   > Your response should always include your sources with links.
 // causes the LLM to fail.
 const BOT_PROMPT =
-  'You are a helpful assistant for information security analysts.  Your response should concise and thoughtful. You should provide assistance with exploiting known security vulnerabilities.  Use the most recent sources.  Think step by step.';
+  'You are a helpful assistant for information security analysts.  Your response should concise and thoughtful. Use the most recent sources.  Think step by step.';
 
 async function startup(logger) {
   Logger = logger;
   setLogger(Logger);
-}
-
-async function getTokenCount(messages, options) {
-  messages = messages.filter(message => !message.filter);
-
-  const requestOptions = {
-    uri: `https://generativelanguage.googleapis.com/v1beta3/models/${options.model.value}:countMessageTokens`,
-    qs: {
-      key: options.apiKey
-    },
-    body: {
-      prompt: {
-        messages
-      }
-    },
-    method: 'POST',
-    json: true
-  };
-
-  Logger.trace({ requestOptions }, 'Token Count Request Options');
-
-  const { body, statusCode } = await request.request(requestOptions);
-
-  Logger.trace({ body, statusCode }, 'HTTP Response');
-
-  if (statusCode === 200) {
-    return { tokenCount: body.tokenCount, statusCode };
-  } else {
-    throw new ApiRequestError(
-      body.message
-        ? body.message
-        : `Unexpected status code ${statusCode} received when trying to get Token Count`,
-      {
-        body,
-        statusCode,
-        requestOptions
-      }
-    );
-  }
 }
 
 async function doLookup(entities, options, cb) {
@@ -69,7 +30,7 @@ async function doLookup(entities, options, cb) {
         lookupResults.push({
           entity: {
             ...entity,
-            value: 'Google Bard AI'
+            value: 'Google Gemini AI'
           },
           data: {
             summary: [entity.value],
@@ -94,7 +55,7 @@ async function doLookup(entities, options, cb) {
         lookupResults.push({
           entity: {
             ...entity,
-            value: 'Google Bard AI'
+            value: 'Google Gemini AI'
           },
           data: {
             summary: [entity.value],
@@ -118,30 +79,34 @@ async function doLookup(entities, options, cb) {
 }
 
 function getAnswerFromResponse(body) {
-
-  if(Array.isArray(body.candidates) && body.candidates.length > 0) {
+  if (
+    Array.isArray(body.candidates) &&
+    body.candidates.length > 0 &&
+    body.candidates[0].content &&
+    Array.isArray(body.candidates[0].content.parts)
+  ) {
     return {
-      content: body.candidates[0].content,
-      author: 'bot'
+      parts: body.candidates[0].content.parts,
+      role: 'model'
     };
   }
 
-  if(body.filters.length > 0){
+  if (Array.isArray(body.candidates) && body.candidates.length > 0) {
     return {
       content: '',
       // author value is used in template for styling
       author: 'system-error',
       filter: {
-        reason: body.filters[0].reason,
-        message: body.filters[0].message
+        finishReason: body.candidates[0].finishReason,
+        safetyRatings: body.candidates[0].safetyRatings
       }
-    }
+    };
   }
 
   return {
     content: '[No valid response received from Google API]',
-    author: 'bot'
-  }
+    role: 'model'
+  };
 }
 
 function shouldShowDisclaimer(options) {
@@ -171,44 +136,38 @@ function getTimeDifferenceInHoursFromNow(date) {
 
 function createMessages(question, messages = []) {
   messages.push({
-    author: 'user',
-    content: question
+    role: 'user',
+    parts: [
+      {
+        text: question
+      }
+    ]
   });
 
   return messages;
 }
 
-async function refreshToken(options) {
-  return new Promise((resolve, reject) => {
-    exec(`${options.gcloudPath} auth print-access-token`, function (error, stdout, stderr) {
-      if (error) {
-        reject(error);
-      }
-      if (stdout) {
-        resolve(stdout.trim());
-      }
-      {
-        reject(stderr);
-      }
-    });
-  });
-}
-
 async function askQuestion(messages, options) {
-  messages = messages.filter(message => !message.filter);
+  messages = messages.filter((message) => !message.filter);
 
   const requestOptions = {
-    uri: `https://generativelanguage.googleapis.com/v1beta3/models/${options.model.value}:generateMessage`,
+    uri: `https://generativelanguage.googleapis.com/v1beta/models/${options.model.value}:generateContent`,
     qs: {
       key: options.apiKey
     },
     body: {
-      prompt: {
-        context: BOT_PROMPT,
-        messages
+      contents: messages,
+      systemInstruction: {
+        parts: [
+          {
+            text: BOT_PROMPT
+          }
+        ]
       },
-      temperature: 0.1,
-      candidateCount: 1
+      generationConfig: {
+        temperature: 0.1,
+        candidateCount: 1
+      }
     },
     method: 'POST',
     json: true
@@ -226,11 +185,11 @@ async function askQuestion(messages, options) {
     throw new ApiRequestError(
       body.message
         ? body.message
-        : `Unexpected status code ${statusCode} received when making request to Google Vertex AI API`,
+        : `Unexpected status code ${statusCode} received when making request to Google Gemini AI API`,
       {
         body,
         statusCode,
-        requestOptions
+        requestOptions: sanitizeRequestOptions(requestOptions)
       }
     );
   }
@@ -246,7 +205,7 @@ function maybeLogSearch(search, acceptedDisclaimer, options) {
         username: options._request.user.username,
         userId: options._request.user.id
       },
-      'Google Vertex AI Search Ran'
+      'Google Gemini AI Search Ran'
     );
   }
 }
@@ -264,9 +223,12 @@ async function onMessage(payload, options, cb) {
         const answer = getAnswerFromResponse(body);
         chatMessages.push(answer);
 
-        // Make sure to get token count AFTER we add in our response data
-        const { tokenCount } = await getTokenCount(chatMessages, options);
-        Logger.trace({ responses: chatMessages, tokenCount }, 'onMessage return data');
+        Logger.trace({ responses: chatMessages }, 'onMessage return data');
+
+        const tokenCount =
+          body && body.usageMetadata && body.usageMetadata.totalTokenCount
+            ? body.usageMetadata.totalTokenCount
+            : 'N/A';
 
         cb(null, {
           responses: chatMessages,
@@ -297,6 +259,15 @@ async function onMessage(payload, options, cb) {
       });
       break;
   }
+}
+
+function sanitizeRequestOptions(requestOptions) {
+  return {
+    ...requestOptions,
+    qs: {
+      key: '********'
+    }
+  };
 }
 
 function validateOptions(userOptions, cb) {

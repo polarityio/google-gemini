@@ -68,7 +68,11 @@ polarity.export = PolarityComponent.extend({
     let responses = this.get('details.responses');
 
     // Remove errors if we had one
-    if(this.get('details.responses').length > 1 && this.get('details.responses')[this.get('details.responses').length - 1].author === 'system-error') {
+    if (
+      this.get('details.responses').length > 1 &&
+      this.get('details.responses')[this.get('details.responses').length - 1].author ===
+        'system-error'
+    ) {
       this.get('details.responses').pop();
       this.get('details.responses').pop();
     }
@@ -77,8 +81,12 @@ polarity.export = PolarityComponent.extend({
     // and we don't need to add anything to the choices array.
     if (this.get('question')) {
       responses.push({
-        author: 'user',
-        content: this.get('question')
+        role: 'user',
+        parts: [
+          {
+            text: this.get('question')
+          }
+        ]
       });
     }
     this.set('details.disclaimerDeclined', false);
