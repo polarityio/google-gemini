@@ -98,11 +98,11 @@
 {{else}}
   <div class="input-group message-box">
     {{input
-            type="text"
-            class="form-control"
-            enter=(action "submitQuestion")
-            value=question
-            id=(concat "googleai-input-" uniqueIdPrefix)
+      type="text"
+      class="form-control"
+      enter=(action "submitQuestion")
+      value=question
+      id=(concat "googleai-input-" uniqueIdPrefix)
     }}
     <div class="input-group-append">
       <button {{action "submitQuestion"}} class="btn btn-outline-secondary" disabled={{isRunning}} type="button">

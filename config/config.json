@@ -4,6 +4,17 @@
   "acronym": "AI",
   "defaultColor": "light-gray",
   "description": "Ask Google Gemini a question and get an answer",
+  "dataTypes": [
+    {
+      "type": "custom",
+      "name": "Question",
+      "description": "Captures questions with a question mark ('?') at the end.",
+      "editable": false,
+      "enabled": true,
+      "key": "question",
+      "regex": "^(?<!\\n|\\r\\n)[ \\t]*.{5,256}\\?[ \\t]*(?!\\n|\\r\\n)$"
+    }
+  ],
   "customTypes": [
     {
       "key": "question",
@@ -46,19 +57,23 @@
       "key": "model",
       "name": "Google Gemini Language Model",
       "description": "The ID of the model to use when accessing Google Chat AI API.  Your API key must have access to the model or you will receive a 404 error.",
-      "default":         {
-        "value": "gemini-1.5-pro-latest",
-        "display": "gemini-1.5-pro-latest (Complex reasoning tasks requiring more intelligence)"
+      "default": {
+        "value": "gemini-2.5-flash",
+        "display": "gemini-2.5-flash (Google's best model in terms of price-performance, offering well-rounded capabilities. Gemini 2.5 Flash rate limits are more restricted since it is an experimental / preview model.)"
       },
       "type": "select",
       "options": [
         {
-          "value": "gemini-1.5-pro-latest",
-          "display": "gemini-1.5-pro-latest (Complex reasoning tasks requiring more intelligence)"
+          "value": "gemini-2.5-flash-lite",
+          "display": "gemini-2.5-flash-lite (A Gemini 2.5 Flash model optimized for cost efficiency and low latency)"
         },
         {
-          "value": "gemini-1.5-flash-latest",
-          "display": "gemini-1.5-flash-latest (Fast and versatile performance across a diverse variety of tasks)"
+          "value": "gemini-2.5-flash",
+          "display": "gemini-2.5-flash (Google's best model in terms of price-performance, offering well-rounded capabilities. Gemini 2.5 Flash rate limits are more restricted since it is an experimental / preview model.)"
+        },
+        {
+          "value": "gemini-2.5-pro",
+          "display": "gemini-2.5-pro (Gemini 2.5 Pro is Google's state-of-the-art thinking model, capable of reasoning over complex problems in code, math, and STEM, as well as analyzing large datasets, codebases, and documents using long context. Gemini 2.5 Pro rate limits are more restricted since it is an experimental / preview model.)"
         }
       ],
       "multiple": false,

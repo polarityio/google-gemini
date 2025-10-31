@@ -1,10 +1,10 @@
 {
   "name": "GoogleGemini",
-  "version": "3.1.1",
+  "version": "3.3.0",
   "main": "./integration.js",
   "private": true,
   "dependencies": {
-    "postman-request": "^2.88.1-postman.40",
+    "postman-request": "^2.88.1-postman.46",
     "async": "^3.2.6"
   }
 }
