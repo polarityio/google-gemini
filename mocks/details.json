@@ -1,0 +1,42 @@
+{
+  "question": "What are the most common indicators of a phishing attack?",
+  "responses": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "What are the most common indicators of a phishing attack?"
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "Here are the most common indicators of a phishing attack:\n\n1. **Suspicious sender addresses** - Email addresses that mimic legitimate domains but have slight variations (e.g., suppor@company.com instead of support@company.com)\n\n2. **Urgent or threatening language** - Messages creating false urgency like \"Your account will be suspended\" or \"Immediate action required\"\n\n3. **Generic greetings** - Using \"Dear Customer\" instead of your actual name\n\n4. **Suspicious links** - Hover over links to reveal URLs that don't match the claimed destination\n\n5. **Poor grammar and spelling** - Legitimate companies typically have professional communications\n\n6. **Requests for sensitive information** - Legitimate organizations never ask for passwords, SSNs, or credit card details via email\n\n7. **Unexpected attachments** - Especially executable files (.exe), scripts, or unusual file types\n\n8. **Mismatched branding** - Logos, colors, or formatting that don't match the claimed sender's official materials\n\nAlways verify suspicious communications through official channels before taking any action."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "Can you provide examples of suspicious link patterns?"
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "Certainly! Here are common suspicious link patterns to watch for:\n\n**1. Misspelled domains:**\n- gooogle.com (extra 'o')\n- micros0ft.com (zero instead of 'o')\n- paypa1.com (number '1' instead of 'l')\n\n**2. Subdomain spoofing:**\n- paypal.secure-login.malicious-site.com\n- amazon.verification.phishing-domain.net\n\n**3. URL shorteners:**\n- bit.ly/xyz123\n- tinyurl.com/abc456\n(Legitimate but can hide malicious destinations)\n\n**4. IP addresses instead of domains:**\n- http://192.168.1.100/login\n- http://203.0.113.45/verify\n\n**5. Unusual top-level domains (TLDs):**\n- company.tk, .ga, .ml, .cf\n(Free TLDs often used by attackers)\n\n**6. Homograph attacks:**\n- аpple.com (Cyrillic 'а' instead of Latin 'a')\n- paypal.com with visually similar Unicode characters\n\n**Best practice:** Always hover over links before clicking to inspect the actual URL, and when in doubt, manually type known-good URLs into your browser."
+        }
+      ]
+    }
+  ],
+  "username": "security.analyst",
+  "showDisclaimer": false,
+  "disclaimer": "Please affirm that no confidential information will be shared with your submission to Google. Click Accept to run your search.",
+  "logSearches": true,
+  "disclaimerDeclined": false
+}
